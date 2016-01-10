@@ -80,6 +80,8 @@ avg_daily_pattern <- act_noNA[,mean(steps),by=interval]
 colnames(avg_daily_pattern) <- c("interval","averageNumberOfSteps")
 plot(avg_daily_pattern$averageNumberOfSteps,type = "l",main="Steps of the daily 5-minute intervals averaged over all days", xlab = "5-minute interval of the day", ylab = "average steps")
 ```
+**The x axis contains `r 60*24/5` points which correspond to all 5-minute intervals of one day!!!**
+
 The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is:
 ```{r max5minInterval, echo=TRUE, cache=TRUE}
 avg_daily_pattern[avg_daily_pattern$averageNumberOfSteps == max(avg_daily_pattern$averageNumberOfSteps),]$interval
@@ -152,4 +154,6 @@ par(mfrow = c(2, 1))
 plot(avg_daily_pattern_weekdays[avg_daily_pattern_weekdays$DayOfWeek=="weekday",]$averageNumberOfSteps,type = "l",main="Steps of the daily 5-minute intervals averaged over all weekdays", xlab = "5-minute interval of the day", ylab = "average steps",ylim=c(0, 250))
 plot(avg_daily_pattern_weekdays[avg_daily_pattern_weekdays$DayOfWeek=="weekend",]$averageNumberOfSteps,type = "l",main="Steps of the daily 5-minute intervals averaged over all weekend", xlab = "5-minute interval of the day", ylab = "average steps", ylim=c(0,250))
 ```
+**Again the x axes contains `r 60*24/5` points which correspond to all 5-minute intervals of one day!!!**
+
 What is striking, is that the weekdays show a strong peak around 8:30 AM and then smaller peaks throughout the day. On the other side, on the weekend, there are smaller peaks (slightly higher in average then during the week) throughout all the day, with no striking local maximum. To interpret this, I would say the participant get up earlier during the week and maybe on his way to work walks a lot. Then at work he walks not so much anymore. On the weekend he gets up a little later, and is slightly more active yet doesn't have the hustle to get to work.

@@ -118,6 +118,8 @@ plot(avg_daily_pattern$averageNumberOfSteps,type = "l",main="Steps of the daily 
 ```
 
 ![](PA1_template_files/figure-html/mean_step_number_per_interval-1.png)\
+**The x axis contains 288 points which correspond to all 5-minute intervals of one day!!!**
+
 The 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps is:
 
 ```r
@@ -250,4 +252,6 @@ plot(avg_daily_pattern_weekdays[avg_daily_pattern_weekdays$DayOfWeek=="weekend",
 ```
 
 ![](PA1_template_files/figure-html/mean_step_number_per_interval_weedays-1.png)\
+**Again the x axes contains 288 points which correspond to all 5-minute intervals of one day!!!**
+
 What is striking, is that the weekdays show a strong peak around 8:30 AM and then smaller peaks throughout the day. On the other side, on the weekend, there are smaller peaks (slightly higher in average then during the week) throughout all the day, with no striking local maximum. To interpret this, I would say the participant get up earlier during the week and maybe on his way to work walks a lot. Then at work he walks not so much anymore. On the weekend he gets up a little later, and is slightly more active yet doesn't have the hustle to get to work.
