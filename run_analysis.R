@@ -13,7 +13,7 @@ setwd("...")
 
 # 1. download and unzip the data folder (if not already happened)
 if(!file.exists("getdata-projectfiles-UCI HAR Dataset.zip")){
-    url <- "..."
+    url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
     download.file(url,destfile = "getdata-projectfiles-UCI HAR Dataset.zip",method = "curl")
 }
 if(!file.exists("UCI HAR Dataset")){
@@ -67,7 +67,7 @@ data_melted <- melt(data,id = c("subject","activity"))
 data_mean_values <- dcast(data_melted,subject + activity ~ variable,mean)
 
 # 8. save txt file of the data set reordered after mean values
-write.table(data_mean_values, file = "data_mean_tidy.txt")
+write.table(data_mean_values, file = "data_mean_tidy.txt", row.name=FALSE)
 
 
 
