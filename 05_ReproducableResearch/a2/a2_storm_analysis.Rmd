@@ -1,0 +1,229 @@
+---
+title: "Reproducable Research (A2): Analysis of the consequences of major storms and weather events in the U.S. for population and economy"
+output: 
+  html_document:
+    keep_md: true
+---
+**authored by [benwol](https://github.com/BenWol/RepData_PeerAssessment1)**
+
+Synopsis
+------------
+The goal of this analysis is to explore the NOAA Storm Database after which weather phenomena have the most severe consequences for the U.S. population as well as for the economy. Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern. This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. In particular we want to answer the questions:
+
+1. Across the United States, which types of events are most harmful with respect to population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+
+## Data Processing
+Before analyzing the data to answer the two main questions, the structure of the data set needs to be evaluated and tydied in order to be able to extract the data of interest.
+
+### (Down-)Loading the data
+At first the data set is downloaded and read into the workspace.
+The code checks if the data is already present in the current working directory and skips the download if that is true.
+
+```{r download, echo = TRUE}
+if(!file.exists("repdata-data-StormData.csv.bz2")){
+  url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+  download.file(url,destfile = "repdata-data-StormData.csv.bz2",method = "curl")
+}
+```
+The read.csv function automatically handles bz2-compressed data, so no need for an extra unzip step.
+```{r load_data, echo = TRUE, cache = TRUE}
+storm_raw <- read.csv("repdata-data-StormData.csv.bz2")
+```
+The data set contains `r dim(storm_raw)[1]` observations (rows) and includes `r dim(storm_raw)[2]` variables (colums). The different variable names are:
+```{r variables, echo = TRUE, cache = TRUE}
+names(storm_raw)
+```
+To get an idea about the data set, the first 10 observables are plotted here:
+```{r head_raw, echo=TRUE, cache=TRUE}
+head(storm_raw,10)
+```
+Since the data is quite messy and mixed up with different not really usable entries, we have to carefully go through the single variables and observations.
+### Preprocessing the data - 1. What variables are important to our analysis?
+In order to answer the questions of how strongly the different weather conditions ("EVTYPE") influenced fatalities ("FATALITIES") and injuries ("INJURIES") on the population as well the economic damage ("PROPDMG","PROPDMGEXP","CROPDMG","PROPDMGEXP") across the U.S. ("STATE__"), the data set can be narrowed down to the main variables:
+```{r narrow, echo = TRUE, cache = TRUE}
+storm <- storm_raw[,c("STATE__","EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")]
+head(storm,10)
+```
+### Preprocessing the data - 2. Subsetting the data after entries from U.S. states (and not outlying areas)
+At first we take a look at the "STATE__" variable to see what entries are existing:
+```{r state_entries, echo = TRUE, cache = TRUE}
+sort(unique(storm$STATE__))
+```
+As one can see there are `r length(sort(unique(storm_raw$STATE__)))` different states included in the data set. According to the [American National Standards Institude (ANSI)](https://www.census.gov/geo/reference/ansi_statetables.html), official states and the district of Columbia (excluding the outlying areas, freely associated states, and the individual minor outlying island territories) only correspond to the FIPS State Numeric Code between 01 and 56. In the following we subset the dataset for only those main US states:
+```{r state_subset, echo = TRUE, cache = TRUE}
+storm_us <- storm[storm$STATE__ >= 1 & storm$STATE__ <= 56,]
+```
+Of course this step can also be left out, if you want to include all outlying U.S. islands and teritories!!!
+### Preprocessing the data - 3. Cleaning up the types of weather events ('EVTYPE')
+There are `r length(levels(storm_us$EVTYPE))` weather events listed in the dataset from:
+```{r evtype1, echo = TRUE, cache = TRUE}
+head(levels(storm_us$EVTYPE),25)
+```
+to
+```{r evtype2, echo = TRUE, cache = TRUE}
+tail(levels(storm_us$EVTYPE),25)
+```
+According to the "NATIONAL WEATHER SERVICE INSTRUCTION 10-1605" from AUGUST 17, 2007 on [STORM DATA PREPARATION](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf), there are only the following events officially recognized as "storm data events". The following list is copied and pasted directly from the PDF.
+```{r events_official, echo = TRUE, cache=TRUE}
+official_storm_events <- c("Astronomical Low Tide","Avalanche","Blizzard","Coastal Flood","Cold/Wind Chill","Debris Flow","Dense Fog","Dense Smoke","Drought","Dust Devil","Dust Storm","Excessive Heat","Extreme Cold/Wind Chill","Flash Flood","Flood","Frost/Freeze","Funnel Cloud","Freezing Fog","Hail","Heat","Heavy Rain","Heavy Snow","High Surf","High Wind","Hurricane/Typhoon","Ice Storm","Lake-Effect Snow","Lakeshore Flood","Lightning","Marine Hail","Marine High Wind","Marine Strong Wind","Marine Thunderstorm Wind","Rip Current","Seiche","Sleet","Storm Surge/Tide","Strong Wind","Thunderstorm Wind","Tornado","Tropical Depression","Tropical Storm","Tsunami","Volcanic Ash","Waterspout","Wildfire","Winter Storm","Winter Weather")
+official_storm_events <- toupper(official_storm_events)
+```
+In order to later compare the list of official event types with the eventtypes of the data set, the official event list is transformed to the same format meaning the official list is turned into uppercase.
+
+Now the `r length(levels(storm_us$EVTYPE))` weather events of the data set need to be ordered and categorized according to these `r length(official_storm_events)` official storm events of the National Weather Service Instruction.
+The first question I am interested in is, how many times do the single official storm events occur exactly in the main storm data set:
+```{r occurence, echo = TRUE, cache = TRUE}
+occurence <- function(x){dim(storm_us[grep(x,storm_us$EVTYPE,ignore.case = TRUE),])[1]}
+ose_occurence <- sapply(official_storm_events,occurence)
+ose_occurence
+sum(ose_occurence)
+nrow(storm_us)
+```
+There are `r sum(ose_occurence)` events in the strom data set which contain exactly the set of characters as one of the official event types. These events will be left as they are. There are also `r nrow(storm_us)-sum(ose_occurence)` unclassified eventtypes in the data set, that don't agree with the official event types. In order to clean this up, we need to tidy the unclassified events by hand. This part of the analysis is very subjective, tidious and needs manual evaluation and comparison of the parts of the characters of the unclassified characters with the official event types. In the following is one possible sort of the unclassified variables.
+```{r clean1, echo=TRUE, cache=TRUE}
+storm_us$EVTYPE[grepl('Low Tide',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[1]
+storm_us$EVTYPE[grepl('^avala',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[2]
+storm_us$EVTYPE[grepl('blizz',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[3]
+storm_us$EVTYPE[grepl('cold|wind.*chill|cool|low temp',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[5]
+storm_us$EVTYPE[grepl('dense fog',storm_us$EVTYPE,ignore.case = TRUE) | grepl('^fog',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[7]
+storm_us$EVTYPE[grepl('smoke',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[8]
+storm_us$EVTYPE[grepl('drought|dry',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[9]
+storm_us$EVTYPE[grepl('dust.*dev',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[10]
+storm_us$EVTYPE[grepl('dust',storm_us$EVTYPE,ignore.case = TRUE) & !grepl('devil',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[11]
+storm_us$EVTYPE[grepl('flood',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[15]
+storm_us$EVTYPE[grepl('frost|freez',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[16]
+storm_us$EVTYPE[grepl('funnel',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[17]
+storm_us$EVTYPE[grepl('fog.*cold',storm_us$EVTYPE,ignore.case = TRUE) | grepl('ice.*fog',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[18]
+storm_us$EVTYPE[grepl('hail',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[19]
+storm_us$EVTYPE[grepl('heat|warm|hot|high temp',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[20]
+storm_us$EVTYPE[grepl('rain|precipitation|shower|wet',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[21]
+storm_us$EVTYPE[grepl('snow',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[22]
+storm_us$EVTYPE[grepl('surf|high wave|high swell|high seas',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[23]
+storm_us$EVTYPE[grepl('wind',storm_us$EVTYPE,ignore.case = TRUE) & !grepl('marine',storm_us$EVTYPE,ignore.case = TRUE) & !grepl('thunderstorm|tstm.*wind',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[24]
+storm_us$EVTYPE[grepl('hurric',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[25]
+storm_us$EVTYPE[grepl('typh',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[25]
+storm_us$EVTYPE[grepl('ice.*storm',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[26]
+storm_us$EVTYPE[grepl('lightning',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[29]
+storm_us$EVTYPE[grepl('marine.*hail',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[30]
+storm_us$EVTYPE[grepl('rip.*cur',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[34]
+storm_us$EVTYPE[grepl('sleet',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[36]
+storm_us$EVTYPE[grepl('High Tide',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[37]
+storm_us$EVTYPE[grepl('Coastal Surge',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[37]
+storm_us$EVTYPE[grepl('thunderstorm|tstm',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[39]
+storm_us$EVTYPE[grepl('tornado',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[40]
+storm_us$EVTYPE[grepl('tornado debris',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[40]
+storm_us$EVTYPE[grepl('tropical.*depression',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[41]
+storm_us$EVTYPE[grepl('tropical.*storm',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[42]
+storm_us$EVTYPE[grepl('volcanic.*ash',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[44]
+storm_us$EVTYPE[grepl('waterspout',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[45]
+storm_us$EVTYPE[grepl('fire',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[46]
+storm_us$EVTYPE[grepl('wint.*storm',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[47]
+storm_us$EVTYPE[grepl('wint',storm_us$EVTYPE,ignore.case = TRUE) & !grepl('storm',storm_us$EVTYPE,ignore.case = TRUE)]<-official_storm_events[48]
+```
+We can tidy up a little more in the `r length(unique(storm_us$EVTYPE))` events, since e.g. events being a "Summary", and a few more, can be cut out:
+```{r events_cutsummary, echo= TRUE, cache= TRUE}
+storm_us <- storm_us[!grepl('summary',storm_us$EVTYPE,ignore.case = TRUE),]
+storm_us <- storm_us[!grepl('other',storm_us$EVTYPE,ignore.case = TRUE),]
+storm_us <- storm_us[!grepl('temperature record',storm_us$EVTYPE,ignore.case = TRUE),]
+storm_us <- storm_us[!grepl('marine accident',storm_us$EVTYPE,ignore.case = TRUE),]
+```
+The rest of the `r length(unique(storm_us$EVTYPE))` events that don't belong to the 48 official events, we concider negligable from this point on.
+
+### Preprocessing the data - 4. Converting the property and crop damage variables into numeric values
+In order to get get actual numerical values for the property and crop damage have to be calculated out of the combination of the variables "PROPDMGEXP" and "CROPDMGEXP" times 10 to the power of the variables "PROPDMGEXP" and "CROPDMGEXP". Moreover the exponential variables have to be converted to numerical values since they look as follows:
+```{r exp, echo= TRUE, cache= TRUE}
+unique(storm_us$PROPDMGEXP)
+unique(storm_us$CROPDMGEXP)
+```
+At first I clean up the exponentials:
+```{r exp_clean, echo=TRUE, cache= TRUE}
+# transforming all exponentials (so the characters) to lower case
+storm_us$CROPDMGEXP<-tolower(storm_us$CROPDMGEXP)
+storm_us$PROPDMGEXP<-tolower(storm_us$PROPDMGEXP)
+
+# transforming the characters into their corresponding numerical exponentials
+storm_us$CROPDMGEXP <- sub("b","9",storm_us$CROPDMGEXP)
+storm_us$CROPDMGEXP <- sub("k","3",storm_us$CROPDMGEXP)
+storm_us$CROPDMGEXP <- sub("m","6",storm_us$CROPDMGEXP)
+storm_us$CROPDMGEXP <- sub("?","0",storm_us$CROPDMGEXP)
+
+storm_us$PROPDMGEXP <- sub("b","9",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("k","3",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("h","2",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("m","6",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("?","0",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("+","0",storm_us$PROPDMGEXP)
+storm_us$PROPDMGEXP <- sub("-","0",storm_us$PROPDMGEXP)
+
+# Moreover I transform the exponential variables from factors to numerical values
+storm_us$CROPDMGEXP <- as.numeric(storm_us$CROPDMGEXP)
+storm_us$PROPDMGEXP <- as.numeric(storm_us$PROPDMGEXP)
+
+# Now we change the NA values to 0s
+storm_us$PROPDMGEXP[is.na(storm_us$PROPDMGEXP)]<-0
+storm_us$CROPDMGEXP[is.na(storm_us$CROPDMGEXP)]<-0
+
+# To double check, the levels are now:
+unique(storm_us$PROPDMGEXP)
+unique(storm_us$CROPDMGEXP)
+```
+Now I create an extra variable (column) where the total property/crop damage is calculated:
+```{r total_dmg,echo = TRUE, cache = TRUE}
+library(dplyr)
+storm_us <- mutate(storm_us, TOTALPROPDMG = PROPDMG * 10^PROPDMGEXP,TOTALCROPDMG = CROPDMG * 10^CROPDMGEXP)
+```
+### Preprocessing the data - 5. Subsetting the dataset with logical exclusions
+Additionally I reorder the data and summarize the data for every eventtype:
+```{r order,echo = TRUE, cache = TRUE}
+head(storm_us)
+storm_us <- mutate(storm_us, TOTALHARM = FATALITIES + INJURIES, TOTALDMG = TOTALPROPDMG + TOTALCROPDMG)
+storm_us <- select(storm_us, EVTYPE, FATALITIES,TOTALHARM, INJURIES, TOTALPROPDMG, TOTALCROPDMG,TOTALDMG) %>% group_by(EVTYPE) %>% summarise_each(funs(sum))
+```
+## Results
+In the following I will answer the questions with the tydied data set.
+
+### Which types of events are most harmful to population health?
+To answer this question I will focus on the total harm being the sum of fatalities and injuries on the population by weather events, which I order in a descending order before plotting it:
+```{r plot1,echo = TRUE, cache = TRUE}
+storm_us_totalharm <- arrange(storm_us, desc(TOTALHARM))
+# The 10 most harmful eventtypes in a list
+head(storm_us_totalharm,10)
+# plot it in a histogram:
+library(ggplot2)
+ggplot(storm_us_totalharm[1:10,], aes(x = EVTYPE, y = TOTALHARM)) + geom_bar(stat = 'identity', fill = 'blue', color = 'black') +
+    theme(axis.text = element_text(size = 14)) +
+    ggtitle("Impact of top 10 harmful weather events in the U.S. for population") +
+    xlab("Event type") +
+    ylab("Total harm (fatalities + injuries)") + 
+        theme(axis.text.x = element_text(angle = 30, hjust = 1, color = 'black', size=12),
+      legend.position='none')
+```
+
+
+### Which types of events have the greatest economic consequences?
+To answer this question I will focus on the total damage as the sum of total property damage and total crop damage by weather events, which I order in a descending order before plotting it:
+```{r plot2,echo = TRUE, cache = TRUE}
+storm_us_totaldmg <- arrange(storm_us, desc(TOTALDMG))
+# The 10 eventtypes with most overall property damage in a list
+head(storm_us_totaldmg,10)
+# plot it in a histogram:
+ggplot(storm_us_totaldmg[1:10,], aes(x = EVTYPE, y = TOTALDMG)) + geom_bar(stat = 'identity', fill = 'blue', color = 'black') +
+    theme(axis.text = element_text(size = 14)) +
+    ggtitle("Impact of top 10 harmful weather in terms of economic damage") +
+    xlab("Event type") +
+    ylab("Total damage (property + crop)") + 
+        theme(axis.text.x = element_text(angle = 30, hjust = 1, color = 'black', size=12),
+      legend.position='none')
+```
+
+
+
+## Summary
+According to my analysis are the weather events in the U.S. with
+
+a) the most harmful consequences for the population: Tornados, Heat and Thunderstorm/Wind,
+
+b) the most caused damage in terms of economic consequences: Flood, Hurricane/Typhoon, Tornado.
+
+Remember, this analysis was done for subjective criteria, e.g. only the main United States (FIPS codes 01-56) or even subjective criteria to clean the eventypes. Especially in the latter, there could be done a cleaner study and evaluation, which I didn't do here for time budget reasons.

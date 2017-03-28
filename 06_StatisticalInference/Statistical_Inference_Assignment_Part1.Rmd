@@ -1,0 +1,107 @@
+---
+title: "Statistical Inference - Assignment Part 1: The exponential distribution in R in comparison with the Central Limit Theorem"
+output: 
+  html_document:
+    keep_md: true
+---
+**authored by [benwol](https://github.com/BenWol/)**
+
+Introduction
+------------
+In this project you will investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution can be simulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. You will investigate the distribution of averages of 40 exponentials. Note that you will need to do a thousand simulations.
+
+Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials. You should
+
+1. Show the sample mean and compare it to the theoretical mean of the distribution.
+2. Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.
+3. Show that the distribution is approximately normal.
+
+In point 3, focus on the difference between the distribution of a large collection of random exponentials and the distribution of a large collection of averages of 40 exponentials.
+
+
+## The exponential function in R
+The exponential distribution in R is defined *rexp(n, lambda)* where *n* is the number of observations and *lambda* is the rate parameter. The mean of the distribution is *1/lambda* while the standard deviation is also *1/lambda*.
+
+In the following I will investigate a distribution of averages of 40 exponentials with a rate of *lambda = 0.2*. First I will plot how the 40 exponentials at a rate of 0.2 look like:
+```{r,cache = TRUE, echo = TRUE}
+lambda <- 0.2
+n <- 40
+plot(rexp(n,lambda))
+```
+
+Before answering the 3 questions on the exponential distribution, we will simulate the dataset consisting of 1000 distributions of 40 exponentials as stated in the exercise description. We set a seed in order to be reproducable.
+
+```{r, cache = TRUE, echo = TRUE}
+set.seed(1234)
+samples <- 1000
+data <- matrix(rexp(n*samples,lambda),samples)
+tail(data)
+```
+
+To double-check, this matrix consists of `r dim(data)[1]` rows and `r dim(data)[2]` colums.
+
+
+## 1. Sample mean in comparison with the theoretical mean
+The mean of ONE distribution of 40 exponentials is e.g.
+```{r,cache = TRUE, echo = TRUE}
+mean(rexp(n, lambda))
+```
+
+The theoretical mean is defined as
+```{r,cache = TRUE, echo = TRUE}
+mean_theory <- 1/lambda
+```
+and has the value `r mean_theory`.
+
+In order to calculate the sample mean (of 1000 distributions of 40 exponentials), we first calculate the means of single distribution of 40 exponentials, to then calculate the overall mean of the 1000 distribution means.
+```{r,cache = TRUE, echo = TRUE}
+means_distr <- apply(data,1,mean)
+mean_sample <- mean(means_distr)
+```
+
+The sample mean is `r mean_sample` while the theoretical value is `r mean_theory`, so they differ by `r abs((mean_sample-mean_theory)/mean_theory)*100` %.
+
+## 2. Sample variance in comparison with the theoretical variance
+The standard deviation and variance of ONE distribution of 40 exponentials is e.g.
+```{r,cache = TRUE, echo = TRUE}
+sd(rexp(n, lambda))
+var(rexp(n, lambda))
+```
+
+The theoretical variance is defined as
+```{r,cache = TRUE, echo = TRUE}
+std_theory <- (1/lambda)/sqrt(n)
+var_theory <- (std_theory)^2
+```
+and has the value `r var_theory`.
+
+In order to calculate the sample variance (of 1000 distributions of 40 exponentials), we take all single means of single distribution of 40 exponentials, to then calculate the overall standard deviation of the 1000 distribution standard deviations, and then the sample variance out of that.
+```{r,cache = TRUE, echo = TRUE}
+std_sample <- sd(means_distr)
+var_sample <- var(means_distr)
+```
+The sample standard deviation is `r std_sample` while the theoretical value is `r std_theory`, so they differ by `r abs((std_sample-std_theory)/std_theory)*100` %.
+The sample variance is `r var_sample` while the theoretical value is `r var_theory`, so they differ by `r abs((var_sample-var_theory)/var_theory)*100` %.
+
+## 3. Visualization of the sample distribution of 1000 exponentials of 40
+Here we plot a histogramm of the sample distribution and compare it to a Gaussian.
+```{r, cache = TRUE, echo = TRUE}
+# first I transform the distribution of means of the exponentials into a data.frame for ggplot
+df_means_distr <- data.frame(means_distr)
+
+# Main plot
+library(ggplot2)
+g <- ggplot(df_means_distr, aes(x=means_distr))
+g <- g + geom_histogram(binwidth = lambda/5, fill="skyblue1",color="royalblue3",aes(y = ..density..))
+g <- g + labs(title = "Distribution of 1000 averages of 40 exponentials", x="Means of 40 exponentials", y="density of counts")
+g <- g + geom_vline(xintercept = mean_sample,size = 1.0, color="black")
+g <- g + stat_function(fun=dnorm,args=list(mean=mean_sample, sd=std_sample),color = "royalblue3", size = 1.0)
+g <- g + geom_vline(xintercept = mean_theory,size= 1.0, color="orangered4",linetype = "longdash")
+g <- g + stat_function(fun=dnorm,args=list(mean=mean_theory, sd=std_theory),color = "orangered4", size = 1.0)
+g
+```
+
+The graph shows all calculated data as a summary. In skyblue the main distribution is plotted as a histogramm. In a royalblue line a normal distribution of the histogram is plotted. In red the normal distribution of the theoretical mean and standard deviation is plotted as a comparison. As is obvious, this distribution of 1000 is very Gaussian like, with a slight deviation to lower values than the mean. Also the Mean Values in comparison give this result.
+
+## Summary
+These results show that a distribution of 1000 exponentials (of 40) behaves after the Central Limit Theorem and comes close to a Gaussian distribution, in shape, as well as Mean and standard deviation.
