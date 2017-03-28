@@ -8,6 +8,7 @@ output:
 
 Introduction
 ------------
+
 Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package.
 
 1. Load the ToothGrowth data and perform some basic exploratory data analyses

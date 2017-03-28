@@ -2,6 +2,7 @@
 #of the "Exploratory Data Analysis" class of the Data Science 
 #Specialization course series of JHU via Coursera
 
+
 ## 0. set working directory and download and unzip the file from the webpage
 #setwd("...");
 

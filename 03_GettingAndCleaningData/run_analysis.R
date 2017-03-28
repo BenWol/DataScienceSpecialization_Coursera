@@ -2,6 +2,7 @@
 # Cleaning Data". It contains all steps to create a tidy data set of the data files provided on the
 # course website about Human Activity Recognition Using Smartphones Dataset which is collected from
 # the accelerators of a Samsung Galaxy S smartphone. The script does the following:
+
 # a) Merges the training and the test sets to create one data set.
 # b) Extracts only the measurements on the mean and standard deviation for each measurement.
 # c) Uses descriptive activity names to name the activities in the data set

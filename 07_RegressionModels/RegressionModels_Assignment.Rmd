@@ -64,7 +64,7 @@ Looking at the correlation of MPG with all variables (see plot2 in Appendix)
 ```{r correlation}
 #correlation[1,]
 ```
-We see that MPG is less correlated with qsec, vs, gear and carb (if taking am for granted.). Let's run a model with all higher correlation values.
+We see that MPG is less correlated with qsec, vs, gear and carb (if taking am for granted.). Let us run a model with all higher correlation values.
 ```{r MVA2}
 highCorModel <- lm(mpg ~ wt + cyl + disp + hp + am, data = mtcars)
 #summary(highCorModel)
