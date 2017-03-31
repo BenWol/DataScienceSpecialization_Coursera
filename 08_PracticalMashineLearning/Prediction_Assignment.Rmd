@@ -1,0 +1,141 @@
+---
+title: "Prediction_Assignment"
+author: "benwol"
+date: "3/28/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Instructions
+The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and to predict the manner in which they did the exercise.
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har.
+
+## Load data
+First we load the training and test set from the given links.
+```{r loaddata,cache = TRUE}
+training = read.csv("pml-training.csv")
+testing = read.csv("pml-testing.csv")
+```
+
+The dimensions of both data sets are
+```{r dim,cache = TRUE}
+dim(training)
+dim(testing)
+```
+
+## Cleaning & formating the data sets
+Next, the data needs to be cleaned before running a model on it. First exploraratory observations of the data set showed that many columns hold almost completely 'NA' as a value. This is checked in the following:
+```{r check1, echo=TRUE,cache = TRUE}
+#colSums(!is.na(training))
+#colSums(!is.na(testing))
+summary(colSums(!is.na(training)))
+summary(colSums(!is.na(testing)))
+```
+In the training set, most of the columns have hold all 19622 numeric entries, yet some columns hold only 406 true values. The rest is 'NA' in this case. In the training set, there are even columns that only hold 'NA' values. Next, we check how many of each type of column are in both the training and the test set.
+
+```{r check2, echo=TRUE,cache = TRUE}
+sum(colSums(!is.na(training)) == 19622)
+sum(colSums(!is.na(training)) == 406)
+sum(colSums(!is.na(testing)) == 20)
+sum(colSums(!is.na(testing)) == 0)
+```
+In the training set, 93 columns are complete wile 67 (sum is 160) are mostly filled with 'NA'. In the test set, only 60 columns are complete and 100 (sum is 160) are completely filled with 'NA'. Therefore is helpful to keep all columns that exist completely in both the training and the test set, while the others can be discarded. Hence, one stays with the 60 complete types of the testing set.
+
+```{r cleaningNAs, echo=TRUE,cache = TRUE}
+train <- training[,colSums(is.na(testing)) == 0]
+test <- testing[,colSums(is.na(testing)) == 0]
+```
+
+When considering the types of variables that are left,
+```{r checkVarriables, echo=TRUE,cache = TRUE}
+colnames(train)
+```
+one can think of discarding the time information as it should not have a big influence on the type of the movement which is what we are after. Also the row number, and the window seem unimportant. Hence, columns 1 and 3-7 can be discarded for now.
+
+```{r discardVariables, echo=TRUE,cache = TRUE}
+train <- train[,c(2,8:ncol(train))]
+test <- test[,c(2,8:ncol(test))]
+```
+
+On the train model we can build now our model on.
+
+## Building the model
+At first we split the train model into a training and a validation data set.
+```{r TrainValidation, echo=TRUE,cache = TRUE}
+require(caret)
+intrain <- createDataPartition(y=train$classe,p=0.7,list=FALSE)
+train_tv<-train[intrain,]
+valid_tv<-train[-intrain,]
+```
+
+Next we try out two different models.
+
+### boosted logistic regression model
+Since we are looking at a logistic regression problem, where 1 of 5 different types of movements result as a classe variable, I choose a logistic regression model. Therefore I choose a boosted logistic regression.
+
+First the model is trained:
+```{r modeltrain, echo=TRUE,cache = TRUE}
+#take only a sample
+#train_tv <- train_tv[sample(1:nrow(train_tv),200,replace=FALSE),]
+#valid_tv <- valid_tv[sample(1:nrow(valid_tv),200,replace=FALSE),]
+
+logBoost <- train(classe ~ .,data = train_tv,method = 'LogitBoost')
+```
+
+Next, the classe outcomes are predicted with the model and from the validation data set, and the accuracy is calculated in comparison with the validation data set outcomes (while examples that predict an 'NA' value are discarded):
+```{r predictValid, echo=TRUE,cache = TRUE}
+pred <- predict(logBoost,valid_tv)
+mean(pred[!is.na(pred)] == valid_tv[!is.na(pred),]$classe)
+```
+
+The resulting accuracy as tested on the validation data set is around 90%. As this is usable, yet the percentage of NA values in the predictions is:
+```{r predictNA, echo=TRUE,cache = TRUE}
+sum(is.na(pred))/length(pred)
+```
+This value should go towards 0, and the achieved 12% is troubling as also NA values will appear from the test data set.
+
+We now predict the classe values from the test data set:
+```{r predictTest, echo=TRUE,cache = TRUE}
+predict(logBoost,test)
+```
+
+As foreseen earlier, the prediction from the test set leads to NA values which is not enought to make a complete prediction of the test set classe values. Therefore we need to consider a different model.
+
+### xgboost model
+When googling after the best model for classification and regression models, the algorithms that sticks out is XGboost (https://www.quora.com/What-are-the-most-important-Machine-Learning-algorithms). That is why I will try to model and predict the problem with this one.
+
+Again, I run the model first.
+```{r modelXGBOOST,eval = TRUE, echo=TRUE,cache = TRUE}
+# the model can be run on parallel cores.
+library(doMC)
+registerDoMC(2)
+
+# taken from https://github.com/dmlc/xgboost/blob/master/R-package/demo/caret_wrapper.R
+# Here we use 10-fold cross-validation, repeating twice, and using random search for tuning hyper-parameters.
+fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 2, search = "random")
+# train a xgbTree model using caret::train
+XGB <- train(classe~., data = train_tv, method = "xgbTree", trControl = fitControl)
+```
+
+The algorithm already includes various validation steps, yet the accuracy is tested against the validation data set anyways:
+```{r modelXGBOOSTvalidation,eval = TRUE, echo=TRUE,cache = TRUE}
+predXGB <- predict(XGB,valid_tv)
+mean(predXGB[!is.na(predXGB)] == valid_tv[!is.na(predXGB),]$classe)
+```
+
+The value of ~97% is very good, while the percentage of NA values in the predictions is caclulated:
+```{r XGBpredictNA, echo=TRUE,cache = TRUE}
+sum(is.na(predXGB))/length(predXGB)
+```
+This value is 0.
+
+Hence, we now predict the classe values from the test data set:
+```{r predictTestXGB, echo=TRUE,cache = TRUE}
+predict(XGB,test)
+```
+
+The results agree to 100% accuracy with the classe values of the test set. The XGBoost model is hence well-suited to predict from this data set.
