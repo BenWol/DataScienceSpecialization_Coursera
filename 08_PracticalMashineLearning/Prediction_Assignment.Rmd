@@ -125,6 +125,7 @@ The algorithm already includes various validation steps, yet the accuracy is tes
 ```{r modelXGBOOSTvalidation,eval = TRUE, echo=TRUE,cache = TRUE}
 predXGB <- predict(XGB,valid_tv)
 mean(predXGB[!is.na(predXGB)] == valid_tv[!is.na(predXGB),]$classe)
+confusionMatrix(predXGB,valid_tv$classe)
 ```
 
 The value of ~97% is very good, while the percentage of NA values in the predictions is caclulated:
