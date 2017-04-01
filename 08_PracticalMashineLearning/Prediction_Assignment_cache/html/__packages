@@ -1,0 +1,10 @@
+base
+lattice
+ggplot2
+caret
+caTools
+foreach
+iterators
+doMC
+xgboost
+plyr

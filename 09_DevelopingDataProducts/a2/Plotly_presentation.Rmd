@@ -1,0 +1,54 @@
+---
+title: "Plotly_presentation"
+author: "benwol"
+date: "3/31/2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Chicken weight over time per chicken and diet
+
+```{r chicken, echo = FALSE,warning=FALSE,message=FALSE}
+library(plotly)
+library(datasets)
+
+weight <- ChickWeight$weight
+Time <- ChickWeight$Time
+Chick <- ChickWeight$Chick
+Diet <- ChickWeight$Diet
+o <- plot_ly(x=Time,y=weight,z=Chick,type="scatter3d",mode="markers",color=as.factor(Diet))%>% 
+  layout(title = "Chicken weight over time for a different diet (colors).",
+         scene = list(
+           xaxis = list(title = "time"), 
+           yaxis = list(title = "weight"), 
+           zaxis = list(title = "chick")))
+o
+```
+
+## Topology of a volcano
+
+```{r volcano, echo = FALSE,warning=FALSE,message=FALSE}
+library(plotly)
+q <- plot_ly(z = ~volcano) %>% add_surface() %>% layout(title = "3D data of a volcano.",
+         scene = list(
+           xaxis = list(title = "x"), 
+           yaxis = list(title = "y"), 
+           zaxis = list(title = "height")))
+q
+```
+
+## Water flow of the Nile over time
+
+```{r Nile, echo = FALSE,warning=FALSE,message=FALSE}
+library(plotly)
+Nil <- as.data.frame(Nile) %>% mutate(time = rep(time(Nile)))
+p <- plot_ly(x = Nil$time, y = Nil$x,mode="lines") %>% layout(title = "Time series of the flow of the Nile at Aswan.",
+           xaxis = list(title = "years"), 
+           yaxis = list(title = "flow"))
+p
+```
+
+## THANKS

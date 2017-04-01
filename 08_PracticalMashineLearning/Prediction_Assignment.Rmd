@@ -54,14 +54,14 @@ When considering the types of variables that are left,
 ```{r checkVarriables, echo=TRUE,cache = TRUE}
 colnames(train)
 ```
-one can think of discarding the time information as it should not have a big influence on the type of the movement which is what we are after. Also the row number, and the window seem unimportant. Hence, columns 1 and 3-7 can be discarded for now.
+one can think of discarding the time information as it should not have a big influence on the type of the movement which is what we are after. Also the row number, and the window seem unimportant. Since we are interested in the movement, also the probant should not have an influence of the movement or just in nuances. Hence, columns 1-7 can be discarded for now.
 
 ```{r discardVariables, echo=TRUE,cache = TRUE}
-train <- train[,c(2,8:ncol(train))]
-test <- test[,c(2,8:ncol(test))]
+train <- train[,8:ncol(train)]
+test <- test[,8:ncol(test)]
 ```
 
-On the train model we can build now our model on.
+On this training data set, we can build now our model on.
 
 ## Building the model
 At first we split the train model into a training and a validation data set.
@@ -80,8 +80,8 @@ Since we are looking at a logistic regression problem, where 1 of 5 different ty
 First the model is trained:
 ```{r modeltrain, echo=TRUE,cache = TRUE}
 #take only a sample
-#train_tv <- train_tv[sample(1:nrow(train_tv),200,replace=FALSE),]
-#valid_tv <- valid_tv[sample(1:nrow(valid_tv),200,replace=FALSE),]
+#train_tv <- train_tv[sample(1:nrow(train_tv),100,replace=FALSE),]
+#valid_tv <- valid_tv[sample(1:nrow(valid_tv),100,replace=FALSE),]
 
 logBoost <- train(classe ~ .,data = train_tv,method = 'LogitBoost')
 ```
@@ -92,11 +92,11 @@ pred <- predict(logBoost,valid_tv)
 mean(pred[!is.na(pred)] == valid_tv[!is.na(pred),]$classe)
 ```
 
-The resulting accuracy as tested on the validation data set is around 90%. As this is usable, yet the percentage of NA values in the predictions is:
+The resulting accuracy as tested on the validation data set is around 91%. As this is usable, yet the percentage of NA values in the predictions is:
 ```{r predictNA, echo=TRUE,cache = TRUE}
 sum(is.na(pred))/length(pred)
 ```
-This value should go towards 0, and the achieved 12% is troubling as also NA values will appear from the test data set.
+This value should go towards 0, and the achieved 14% is troubling as also NA values will appear from the test data set.
 
 We now predict the classe values from the test data set:
 ```{r predictTest, echo=TRUE,cache = TRUE}
