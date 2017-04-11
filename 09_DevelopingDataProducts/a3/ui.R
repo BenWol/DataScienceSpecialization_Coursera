@@ -2,6 +2,7 @@
 # something like this with german league
 
 library(shiny)
+library(plotly)
 
 # Define UI for application that draws a histogram
 shinyUI(pageWithSidebar(
@@ -26,13 +27,14 @@ shinyUI(pageWithSidebar(
                                              h3("Year"),
                                              min = 1963,
                                              max = 2015,
-                                             value = c(1963,2015))
+                                             value = c(1963,2015),
+                                             ticks=FALSE,sep = "")
                 ) 
         ),
         mainPanel(
                 tabsetPanel(
                         tabPanel("Explore", value=1,fluidRow(
-                                column(12,
+                                column(10,
                                        dataTableOutput('result')
                                 ))), 
                         tabPanel("Goals", value=2,plotOutput("goals"))

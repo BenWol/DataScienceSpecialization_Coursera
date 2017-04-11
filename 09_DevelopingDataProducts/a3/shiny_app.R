@@ -56,3 +56,6 @@ for(i in seq(length(s_first:s_last))) {
 plot(s_first:s_last,h)
 plot(s_first:s_last,v)
 plot(s_first:s_last,h+v)
+
+c("dodgerblue4","seagreen4","orangered4"), size = 5)+
+        geom_smooth(method='loess',colour = c("dodgerblue1","seagreen2","orangered2"),se=TRUE)+

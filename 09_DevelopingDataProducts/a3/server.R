@@ -1,5 +1,10 @@
+# http://deanattali.com/blog/advanced-shiny-tips/
+
 # load packages
 library(shiny)
+library(plotly)
+library(dplyr)
+library(tidyr)
 
 # load data
 bl <- read.csv("germany_data.csv",header = TRUE,sep = ",")
@@ -23,6 +28,18 @@ shinyServer(function(input, output) {
                         h[i] <- sum(bl_g[bl_g$Season == i+input$year[1]-1,]$hgoal)
                         v[i] <- sum(bl_g[bl_g$Season == i+input$year[1]-1,]$vgoal)
                 }
-                plot(input$year[1]:input$year[2],h+v)
-        })
+                all <- h + v
+                dat <- data.frame(input$year[1]:input$year[2], h, v, all)
+                colnames(dat) <- c("year", "h","v","all")
+                
+                # ggplot2 with loess fit
+                dat %>% gather(key,value,h,v,all) %>%
+                ggplot(aes(x=year, y=value,label = key))+
+                geom_point()+
+                geom_point(shape=16,colour = "dodgerblue4", size = 5)+
+                geom_smooth(method='loess',colour = "dodgerblue1",se=TRUE)+
+                ylab("goals")+xlab("years")+
+                theme(axis.title = element_text(colour="black", size=26),
+                      axis.text  = element_text(vjust=0.5, size=20))
+       })
 })
