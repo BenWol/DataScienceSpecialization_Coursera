@@ -1,4 +1,6 @@
 # http://deanattali.com/blog/advanced-shiny-tips/
+# https://github.com/jalapic/shinyapps/tree/master/engsoccerbeta
+# name the guy at the end
 
 # load packages
 library(shiny)
@@ -34,10 +36,10 @@ shinyServer(function(input, output) {
                 
                 # ggplot2 with loess fit
                 dat %>% gather(key,value,h,v,all) %>%
-                ggplot(aes(x=year, y=value,label = key))+
-                geom_point()+
-                geom_point(shape=16,colour = "dodgerblue4", size = 5)+
-                geom_smooth(method='loess',colour = "dodgerblue1",se=TRUE)+
+                ggplot(aes(x=year, y=value,colour = factor(key))) +
+                geom_point(shape=16, size = 5)+
+                #scale_color_manual(values=c("h"="dodgerblue4","v"="seagreen1","all"="orangered1"))
+                #geom_smooth(method='loess',colour = "dodgerblue1",se=TRUE)+
                 ylab("goals")+xlab("years")+
                 theme(axis.title = element_text(colour="black", size=26),
                       axis.text  = element_text(vjust=0.5, size=20))

@@ -1,5 +1,6 @@
 # https://jalapic.shinyapps.io/engsoccerbeta/
 # something like this with german league
+# cite the guy at the end on the shiny app and say that one can get the data from his github.
 
 library(shiny)
 library(plotly)
@@ -24,7 +25,7 @@ shinyUI(pageWithSidebar(
                 conditionalPanel(condition="input.conditionedPanels==2",
                                  h2("Goals per Saison"),
                                  sliderInput("year",
-                                             h3("Year"),
+                                             h3("Season"),
                                              min = 1963,
                                              max = 2015,
                                              value = c(1963,2015),
