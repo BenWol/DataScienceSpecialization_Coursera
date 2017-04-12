@@ -3,9 +3,11 @@ rm(list=ls())
 ####### loading packages  #######
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(data.table))
+library(tidyr)
 
 ####### loading data set  #######
-setwd("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/09_Developing_Data_Products/a3")
+#setwd("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/09_Developing_Data_Products/a3")
+setwd("/Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
 bl <- read.csv("germany_data.csv",header = TRUE,sep = ",")
 
 ####### ideas  #######
@@ -38,9 +40,17 @@ for(i in seq(length(s_first:s_last))) {
   h[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$hgoal)
   v[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$vgoal)
 }
-plot(s_first:s_last,h)
-plot(s_first:s_last,v)
-plot(s_first:s_last,h+v)
+
+# ggplot2 with loess fit
+dat %>% gather(key,value,h,v,all) %>%
+  ggplot(aes(x=year, y=value,colour = factor(key))) +
+  geom_point(shape=16, size = 5)+
+  #scale_color_manual(values=c("h"="dodgerblue4","v"="seagreen1","all"="orangered1"))
+  #geom_smooth(method='loess',colour = "dodgerblue1",se=TRUE)+
+  ylab("goals")+xlab("years")+
+  theme(axis.title = element_text(colour="black", size=26),
+        axis.text  = element_text(vjust=0.5, size=20))
+
 
 # (h&v) goals per season per team
 team <- "Borussia Dortmund"
@@ -53,9 +63,22 @@ for(i in seq(length(s_first:s_last))) {
   h[i] <- sum(bl_gt[bl_gt$Season == i+s_first-1 & bl_gt$home == team,]$hgoal)
   v[i] <- sum(bl_gt[bl_gt$Season == i+s_first-1 & bl_gt$visitor == team,]$vgoal)
 }
-plot(s_first:s_last,h)
-plot(s_first:s_last,v)
-plot(s_first:s_last,h+v)
+all <- h + v
+dat <- data.frame(s_first:s_last, h, v, all)
+colnames(dat) <- c("year", "h","v","all")
 
-c("dodgerblue4","seagreen4","orangered4"), size = 5)+
-        geom_smooth(method='loess',colour = c("dodgerblue1","seagreen2","orangered2"),se=TRUE)+
+# ggplot2 with loess fit
+dat <- gather(dat,key,value,h,v,all)
+
+  ggplot(dat,aes(x=year, y=value,colour = factor(key))) +
+  geom_point(shape=16, size = 4)+
+  scale_color_manual(values=c("h"="#999999", "v"="#E69F00", "all"="#56B4E9")) +
+  geom_smooth(method='loess',se=TRUE)+
+  scale_color_manual(values=c("h"="dodgerblue4","v"="chartreuse4","all"="orangered2"))+
+  ylab("goals")+xlab("years")+
+  theme(axis.title = element_text(color="black", size=26),
+        axis.text  = element_text(vjust=0.5, size=20))
+
+
+#c("dodgerblue4","seagreen4","orangered4"), size = 5)+
+#        geom_smooth(method='loess',colour = c("dodgerblue1","seagreen2","orangered2"),se=TRUE)+

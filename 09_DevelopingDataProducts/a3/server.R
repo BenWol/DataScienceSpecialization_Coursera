@@ -32,16 +32,17 @@ shinyServer(function(input, output) {
                 }
                 all <- h + v
                 dat <- data.frame(input$year[1]:input$year[2], h, v, all)
-                colnames(dat) <- c("year", "h","v","all")
+                colnames(dat) <- c("year", "home","visitor","all")
+                dat <- gather(dat,key,value,home,visitor,all)
                 
                 # ggplot2 with loess fit
-                dat %>% gather(key,value,h,v,all) %>%
-                ggplot(aes(x=year, y=value,colour = factor(key))) +
-                geom_point(shape=16, size = 5)+
-                #scale_color_manual(values=c("h"="dodgerblue4","v"="seagreen1","all"="orangered1"))
-                #geom_smooth(method='loess',colour = "dodgerblue1",se=TRUE)+
-                ylab("goals")+xlab("years")+
-                theme(axis.title = element_text(colour="black", size=26),
-                      axis.text  = element_text(vjust=0.5, size=20))
+                g <- ggplot(dat,aes(x=year, y=value,colour = key)) +
+                  geom_point(shape=16, size = 4)+
+                  geom_smooth(method='loess',se=TRUE)+
+                  scale_color_manual(values=c("home"="dodgerblue4","visitor"="chartreuse4","all"="orangered2"))+
+                  ylab("goals")+xlab("years")+
+                  theme(axis.title = element_text(color="black", size=26),
+                        axis.text  = element_text(vjust=0.5, size=20))
+                g
        })
 })
