@@ -33,16 +33,33 @@ shinyServer(function(input, output) {
                 all <- h + v
                 dat <- data.frame(input$year[1]:input$year[2], h, v, all)
                 colnames(dat) <- c("year", "home","visitor","all")
-                dat <- gather(dat,key,value,home,visitor,all)
+                
+                if (!input$show_home & !input$show_visitor & !input$show_all) {
+                } else {
+                    if (!input$show_home) {
+                      dat <- select(dat,-home)
+                    }
+                    if (!input$show_visitor) {
+                      dat <- select(dat,-visitor)
+                    }
+                    if (!input$show_all) {
+                      dat <- select(dat,-all)
+                    }
+                  }
+                dat <- dat %>% gather(key,value,2:length(dat))
                 
                 # ggplot2 with loess fit
                 g <- ggplot(dat,aes(x=year, y=value,colour = key)) +
-                  geom_point(shape=16, size = 4)+
-                  geom_smooth(method='loess',se=TRUE)+
-                  scale_color_manual(values=c("home"="dodgerblue4","visitor"="chartreuse4","all"="orangered2"))+
                   ylab("goals")+xlab("years")+
                   theme(axis.title = element_text(color="black", size=26),
                         axis.text  = element_text(vjust=0.5, size=20))
+                if (input$show_home | input$show_visitor | input$show_all) {
+                  g <- g + geom_point(shape=16, size = 4)
+                }
+                if (input$show_fit) {
+                g <- g + geom_smooth(method='loess',se=input$show_fit_error)
+                }
+                g <- g + scale_color_manual(values=c("home"="dodgerblue4","visitor"="chartreuse4","all"="orangered2"))
                 g
        })
 })

@@ -6,8 +6,8 @@ suppressPackageStartupMessages(library(data.table))
 library(tidyr)
 
 ####### loading data set  #######
-#setwd("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/09_Developing_Data_Products/a3")
-setwd("/Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
+setwd("//Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
+#setwd("/Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
 bl <- read.csv("germany_data.csv",header = TRUE,sep = ",")
 
 ####### ideas  #######
@@ -40,6 +40,9 @@ for(i in seq(length(s_first:s_last))) {
   h[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$hgoal)
   v[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$vgoal)
 }
+all <- h + v
+dat <- data.frame(s_first:s_last, h, v, all)
+colnames(dat) <- c("year", "home","visitor","all")
 
 # ggplot2 with loess fit
 dat %>% gather(key,value,h,v,all) %>%

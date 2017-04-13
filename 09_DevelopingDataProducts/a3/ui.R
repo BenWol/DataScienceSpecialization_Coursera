@@ -10,7 +10,7 @@ shinyUI(pageWithSidebar(
         headerPanel("Football Data of the German 1.Bundesliga"),
         sidebarPanel(
                 conditionalPanel(condition="input.conditionedPanels==1",
-                                 h2("Explore for a specific result"),
+                                 h2("Search for specific results"),
                                  sliderInput("homegoal",
                                              h3("Goals of home team"),
                                              min = 0,
@@ -29,16 +29,21 @@ shinyUI(pageWithSidebar(
                                              min = 1963,
                                              max = 2015,
                                              value = c(1963,2015),
-                                             ticks=FALSE,sep = "")
+                                             ticks=FALSE,sep = ""),
+                                 checkboxInput("show_home","Show home goals data",value=TRUE),
+                                 checkboxInput("show_visitor","Show visitor goals data",value=TRUE),
+                                 checkboxInput("show_all","Show all goals data",value=TRUE),
+                                 checkboxInput("show_fit","Show fit line",value=FALSE),
+                                 checkboxInput("show_fit_error","Show error of fit line",value=FALSE)
                 ) 
         ),
         mainPanel(
                 tabsetPanel(
-                        tabPanel("Explore", value=1,fluidRow(
+                        tabPanel("Search results", value=1,fluidRow(
                                 column(10,
                                        dataTableOutput('result')
                                 ))), 
-                        tabPanel("Goals", value=2,plotOutput("goals"))
+                        tabPanel("Goals per saison", value=2,plotOutput("goals"))
                         , id = "conditionedPanels"
                 )
         )
