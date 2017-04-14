@@ -1,6 +1,7 @@
 ---
 title: "BuLiApp - discover historical scores of the German 1. Bundesliga"
 author: "benwol"
+date : "4/14/2017"
 output: ioslides_presentation
 ---
 
@@ -9,46 +10,66 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## What does it do?
-![](bundesliga.png)
+<img src="bundesliga.png" width="300">
 
-- for football freakies
-- name the features
-- name where the data is from and ideas
+- The app offers the user to research match results of all games played in the German 1. Bundesliga.
+- The highest German football leaque was officially founded in 1963, starting its first season in the same year.
+- The app is divided in two parts:
+1. Search Result function
+2. Goals per Season & Team graph tool
 
-## Discover specific results
+## 1. Discover specific results
+- Whether you want to know know when the 11:1 of Dortmund against Bielefeld took place, or if there are games that ended 1:9 in history, you can find it on the first tab.
+- The analysis tool is applied on a dataset provided by https://github.com/jalapic/engsoccerdata.
 
-- the 10:1 of dortmund against bielefeld
-- 1:9 of leverkusen against ulm
-- you ask yourself, when was that which season, where there similar results
-- here you can find out
-screenshot
-- code example
-
-```{r Nile, echo = FALSE,warning=FALSE,message=FALSE}
-library(plotly)
-Nil <- as.data.frame(Nile) %>% mutate(time = rep(time(Nile)))
-p <- plot_ly(x = Nil$time, y = Nil$x,mode="lines") %>% layout(title = "Time series of the flow of the Nile at Aswan.",
-           xaxis = list(title = "years"), 
-           yaxis = list(title = "flow"))
-p
+- By moving the sliders for home and visiting team goals, the app automatically lists all respective results in history. The results can be ordered according to every information type.
+```{r select_result,echo=F}
+bl <- read.csv("./BuLiApp/germany_data.csv",header = TRUE,sep = ",")
+bl_c <- bl[,1:5];
 ```
 
-## Goals per saison over Bundeliga history
+```{r select_result2,echo=T}
+homegoal = 1;visgoal = 9;
+bl_c[(bl$hgoal == homegoal) & (bl$vgoal == visgoal),]
+```
 
-- look at trends
-- where there in general more goals today or in the past
-- how does my team behave over the course of history
-- look at different trends at different points in time
-screenshot
+## 2. Goals per saison over Bundeliga history
 
-## Goals per saison over Bundeliga history - code example
-code example
-```{r Nile2, echo = FALSE,warning=FALSE,message=FALSE}
-library(plotly)
-Nil <- as.data.frame(Nile) %>% mutate(time = rep(time(Nile)))
-p <- plot_ly(x = Nil$time, y = Nil$x,mode="lines") %>% layout(title = "Time series of the flow of the Nile at Aswan.",
-           xaxis = list(title = "years"), 
-           yaxis = list(title = "flow"))
-p
+- Ask yourself, whether there were generally more goals marked per game today or 25 years ago? How did my team behave over time?
+- You can plot over time how many goals per season (home/away or all) were marked per saison.
+- Select the time span, an individual team (or all teams) and whether you want to compare the data to a trend line (with/without errorbars).
+
+## 2. Goals per saison over Bundeliga history - example for all teams
+```{r goal,echo=F,warning=FALSE,message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+bl_g <- bl[,c(2:4,6,7)]
+
+# (h&v) goals per season
+s_first <- min(bl_g$Season)
+s_last <- max(bl_g$Season)
+h <- seq(length(s_first:s_last))
+v <- seq(length(s_first:s_last))
+for(i in seq(length(s_first:s_last))) {
+  h[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$hgoal)
+  v[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$vgoal)
+}
+all <- h + v
+dat <- data.frame(s_first:s_last, h, v, all)
+colnames(dat) <- c("year", "home","visitor","all")
+
+# ggplot2 with loess fit
+dat <- gather(dat,key,value,home,visitor,all)
+g <- ggplot(dat,aes(x=year, y=value,colour = key)) +
+     ylab("goals")+xlab("years")+
+     theme(axis.title = element_text(color="black", size=26),
+     axis.text  = element_text(vjust=0.5, size=20))
+g <- g + geom_point(shape=16, size = 3)
+g <- g + geom_smooth(method='loess',se=TRUE)
+g <- g + scale_color_manual(values=c("home"="dodgerblue4","visitor"="chartreuse4","all"="orangered2"))+
+     theme(legend.text=element_text(size=20),legend.title=element_blank())
+g
 ```
 

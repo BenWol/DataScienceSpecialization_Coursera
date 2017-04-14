@@ -10,7 +10,7 @@ library(tidyr)
 library(ggplot2)
 
 # load data
-bl <- read.csv("germany_data.csv",header = TRUE,sep = ",")
+bl <- read.csv("./BuLiApp/germany_data.csv",header = TRUE,sep = ",")
 bl_c <- bl[,1:5]
 bl_g <- bl[,c(2:4,6,7)]
 
