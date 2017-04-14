@@ -1,0 +1,54 @@
+---
+title: "BuLiApp - discover historical scores of the German 1. Bundesliga"
+author: "benwol"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## What does it do?
+![](bundesliga.png)
+
+- for football freakies
+- name the features
+- name where the data is from and ideas
+
+## Discover specific results
+
+- the 10:1 of dortmund against bielefeld
+- 1:9 of leverkusen against ulm
+- you ask yourself, when was that which season, where there similar results
+- here you can find out
+screenshot
+- code example
+
+```{r Nile, echo = FALSE,warning=FALSE,message=FALSE}
+library(plotly)
+Nil <- as.data.frame(Nile) %>% mutate(time = rep(time(Nile)))
+p <- plot_ly(x = Nil$time, y = Nil$x,mode="lines") %>% layout(title = "Time series of the flow of the Nile at Aswan.",
+           xaxis = list(title = "years"), 
+           yaxis = list(title = "flow"))
+p
+```
+
+## Goals per saison over Bundeliga history
+
+- look at trends
+- where there in general more goals today or in the past
+- how does my team behave over the course of history
+- look at different trends at different points in time
+screenshot
+
+## Goals per saison over Bundeliga history - code example
+code example
+```{r Nile2, echo = FALSE,warning=FALSE,message=FALSE}
+library(plotly)
+Nil <- as.data.frame(Nile) %>% mutate(time = rep(time(Nile)))
+p <- plot_ly(x = Nil$time, y = Nil$x,mode="lines") %>% layout(title = "Time series of the flow of the Nile at Aswan.",
+           xaxis = list(title = "years"), 
+           yaxis = list(title = "flow"))
+p
+```
+

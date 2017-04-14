@@ -6,8 +6,8 @@ suppressPackageStartupMessages(library(data.table))
 library(tidyr)
 
 ####### loading data set  #######
-setwd("//Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
 #setwd("/Users/bwolter/PhD/private/data/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
+setwd("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/DataScienceSpecialization_Coursera/09_DevelopingDataProducts/a3")
 bl <- read.csv("germany_data.csv",header = TRUE,sep = ",")
 
 ####### ideas  #######
@@ -37,7 +37,7 @@ s_last <- max(bl_g$Season)
 h <- seq(length(s_first:s_last))
 v <- seq(length(s_first:s_last))
 for(i in seq(length(s_first:s_last))) {
-  h[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$hgoal)
+  h[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$hgoal)a <- 
   v[i] <- sum(bl_g[bl_g$Season == i+s_first-1,]$vgoal)
 }
 all <- h + v
