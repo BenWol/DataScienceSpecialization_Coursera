@@ -1,0 +1,160 @@
+---
+title: "CapstoneMilestoneReport: Exploratory Data Analysis & Project Outline"
+author: "benwol"
+date: "5/14/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+This milestone report purposes the display of the properties of the text data sets and should give an exploratory analysis of them. In brief, next to having downloaded the data, it should show basic summary statistics, interesting or peculiar features within the text data, and draw an outline of the predition algorithm that is planned to be used in the Shiny prediction app. The data set focusses on the english text files.
+
+## Basic statistics of the data set
+The three data files have the following sizes in MB.
+- US twitter:
+```{r size1, echo=TRUE, cache=TRUE}
+file.info("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.twitter.txt")$size / (1024*1024)
+```
+- US blogs:
+```{r size2, echo=TRUE, cache=TRUE}
+file.info("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.blogs.txt")$size / (1024*1024)
+```
+- US news:
+```{r size3, echo=TRUE, cache=TRUE}
+file.info("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.news.txt")$size / (1024*1024)
+```
+
+Next, the data is loaded.
+```{r load, echo=FALSE,cache = TRUE, warning=FALSE}
+US_twitter <- readLines("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.twitter.txt",encoding = "UTF-8")
+US_blogs <- readLines("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.blogs.txt",encoding = "UTF-8")
+US_news <- readLines("/Users/benwo/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.news.txt",encoding = "UTF-8")
+```
+
+The data sets have the following characteristics including number of lines, number of overall characters, number of overall words, and minimum/maximum/mean number of lines.
+```{r characteristics, echo=TRUE,cache = TRUE}
+library(stringi)
+stats <- sapply(list(US_twitter,US_blogs,US_news),function(x) stri_stats_general(x))
+word_per_line <- lapply(list(US_twitter,US_blogs,US_news),function(x) stri_count_words(x))
+data.frame(data=c("US_twitter","US_blogs","US_news"),Lines=stats[1,],Characters = stats[3,],mean_words = sapply(word_per_line,mean),min_words = sapply(word_per_line,min),max_words = sapply(word_per_line,max))
+```
+
+The number of words are plotted as histograms.
+```{r plots, echo=TRUE,cache = TRUE}
+library(ggplot2)
+qplot(word_per_line[[1]],geom="histogram",main="Histogram of words in US twitter", xlab="Number of  words",ylab="Counts",binwidth=1,xlim = c(0,50))
+qplot(word_per_line[[2]],geom="histogram",main="Histogram of words in US blogs", xlab="Number of  words",ylab="Counts",binwidth=1,xlim = c(0,500))
+qplot(word_per_line[[3]],geom="histogram",main="Histogram of words in US news", xlab="Number of  words",ylab="Counts",binwidth=1,xlim = c(0,250))
+```
+
+## Sampling, tokenization, cleaning
+Before further cleaning of the text lines, the data sets will be split in a sampled sub set in order to decrease computational costs in the following steps.
+```{r sampling, echo=TRUE,cache = TRUE}
+samplesize <- 25000 #number of samples
+set.seed(1234)
+
+data <- c(US_twitter[sample(1:length(US_twitter),samplesize,replace=FALSE)],US_blogs[sample(1:length(US_blogs),samplesize,replace=FALSE)],US_news[sample(1:length(US_news),samplesize,replace=FALSE)])
+```
+
+Next, we use the R textmining packacke 'tm' to clean the data further including changing all words to lower case, removing numbers, removing punctuation (and optionally the english stopwords) and finally removing whitespace (before and after) sentences.
+lowercase; clean punctuation, weird charachters, numbers
+```{r tm_package, echo=TRUE,cache = TRUE}
+library(tm)
+
+corpus <- VCorpus(VectorSource(data))
+corpus <- tm_map(corpus, tolower)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, stripWhitespace)
+
+#inspect the corpus in its current state
+inspect(corpus[sample(1:length(data),5,replace=FALSE)])
+```
+
+## Ngram tokenization
+The task of the Capstone Project will be to develop a model that predicts the following word upon typing in an example word or series of words. The model will predict based on the sequences of words in the present text data sets. A valid series of features for the model will be the evaluation of n-grams (as in a sequence of n words in a text, https://en.wikipedia.org/wiki/N-gram) and hence the frequency of how often they appear. As preparation of the exploratory data analysis, the ngrams are extracted from the sample data set. Therefore, the words of each text line need to be tokenized to then be compared as ngrams. We focus on the first 4 orders of ngrams.
+```{r ngrams, echo=TRUE,cache = TRUE}
+library(RWeka)
+
+extractNgrams <- function(dat, n) {
+    foo <- NGramTokenizer(dat, Weka_control(min = n, max = n, delimiters = " \\r\\n\\t.,;:\"()?!"))  # according to http://weka.sourceforge.net/doc.stable/weka/core/tokenizers/NGramTokenizer.html
+    bar <- data.frame(table(foo))
+    foobar <- bar[order(bar$Freq, decreasing = TRUE), ]
+    colnames(foobar) <- c("ngram", "counts")
+    foobar
+}
+
+OneGrams <- extractNgrams(corpus, 1)
+TwoGrams <- extractNgrams(corpus, 2)
+ThreeGrams <- extractNgrams(corpus, 3)
+FourGrams <- extractNgrams(corpus, 4)
+```
+
+## Exploratory Data Analysis
+Now, the most frequent Ngrams are visualized as part of the exploratory data analysis.
+
+### Top25 of the most frequent Ngrams (1-4)
+First barplots of the top25 of each Ngrams (1-4) are shown.
+```{r ngrams_hist, echo=TRUE,cache = TRUE}
+barplot(OneGrams[1:25,2], cex.names=1, names.arg=OneGrams[1:25,1], col="indianred", main="Top25 1Grams", las=2)
+barplot(TwoGrams[1:25,2], cex.names=0.85, names.arg=TwoGrams[1:25,1], col="lightblue4", main="Top25 2Grams", las=2)
+barplot(ThreeGrams[1:25,2], cex.names=0.65, names.arg=ThreeGrams[1:25,1], col="olivedrab4", main="Top25 3Grams", las=2)
+barplot(FourGrams[1:25,2], cex.names=0.5, names.arg=FourGrams[1:25,1], col="tomato4", main="Top25 4Grams", las=2)
+```
+
+### Word clouds of all Ngrams
+A fancier way to depict the different most frequent Ngrams is by wordclouds.
+```{r ngrams_wordclouds, echo=TRUE,cache = TRUE,warning=FALSE}
+#head(OneGrams)
+#head(TwoGrams)
+#head(ThreeGrams)
+#head(FourGrams)
+# Create the word cloud
+library(wordcloud)
+pal = brewer.pal(7,"BuPu")
+wordcloud(words = OneGrams$ngram,
+          freq = OneGrams$counts,
+          scale = c(3,.5),
+          random.order = F,
+          min.freq = 1000,
+          colors = pal)
+
+pal2 = brewer.pal(7,"Greens")
+wordcloud(words = TwoGrams$ngram,
+          freq = TwoGrams$counts,
+          scale = c(3,.5),
+          random.order = F,
+          min.freq = 100,
+          colors = pal2)
+
+pal3 = brewer.pal(7,"Oranges")
+wordcloud(words = ThreeGrams$ngram,
+          freq = ThreeGrams$counts,
+          scale = c(3,.5),
+          random.order = F,
+          min.freq = 15,
+          colors = pal3)
+
+pal4 = brewer.pal(7,"Blues")
+wordcloud(words = FourGrams$ngram,
+          freq = FourGrams$counts,
+          scale = c(3,.5),
+          random.order = F,
+          min.freq = 5,
+          colors = pal4)
+```
+
+
+## Roadmap for model
+The plan for the next steps in the project involve building a meaningful and fast preditive model and eventually a data product. This will involve in detail
+
+1. handling the whole sizes of the data sets
+2. building suitable Ngrams out of all data
+3. build a model around the Ngrams
+4. perhaps involving parts of the "sequence memorizer" (http://www.stats.ox.ac.uk/~teh/research/compling/WooGasArc2011a.pdf) using markovian series
+5. testing the model
+6. building a shiny app that recommends the successive word for an(y) input word(s)
