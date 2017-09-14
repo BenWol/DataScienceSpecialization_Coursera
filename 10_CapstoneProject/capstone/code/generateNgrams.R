@@ -70,9 +70,9 @@ generateNgrams <- function(x, ngram = 2L, encoding = "ASCII", convertToLower = T
 # generation of all n grams of the english Twitter, News and Blog data sets, and combination of all respectively #
 ##################################################################################################################
 
-en_Twitter <- readLines("C:/Users/benja/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.twitter.txt", encoding = "UTF-8")
-en_News <- readLines("C:/Users/benja/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.news.txt", encoding = "UTF-8")
-en_Blogs <- readLines("C:/Users/benja/Dropbox/DataScience/Coursera_DataScience_JHU/10_CapstoneProject/data/en_US/en_US.blogs.txt", encoding = "UTF-8")
+en_Twitter <- readLines("C:/_directory_/data/en_US/en_US.twitter.txt", encoding = "UTF-8")
+en_News <- readLines("C:/_directory_/data/en_US/en_US.news.txt", encoding = "UTF-8")
+en_Blogs <- readLines("C:/_directory_/data/en_US/en_US.blogs.txt", encoding = "UTF-8")
 
 # Twitter
 unigramsTwitter <- generateNgrams(en_Twitter,ngram = 1)

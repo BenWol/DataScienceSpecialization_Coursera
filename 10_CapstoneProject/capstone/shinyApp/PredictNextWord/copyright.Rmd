@@ -1,0 +1,9 @@
+---
+title: "Untitled"
+output: html_document
+---
+<br><br>
+
+&copy; 2017 - [Benjamin Wolter](https://www.linkedin.com/in/benjamin-wolter-6a6b9a9b/)
+
+created with [R](https://www.r-project.org/) / [RStudio](https://www.rstudio.com/) and [Shiny Apps](https://shiny.rstudio.com/)
